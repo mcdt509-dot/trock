@@ -1,0 +1,5 @@
+{
+  "name": "TROCK",
+  "description": "A high-performance, intelligent AI chat interface designed for speed and unrestricted exploration.",
+  "requestFramePermissions": ["microphone"]
+}
