@@ -32,16 +32,59 @@ interface Message {
   isStreaming?: boolean;
 }
 
-const NeuralPulse = () => (
-  <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-full">
-    <motion.div
-      animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-      className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"
-    />
-    <span className="text-[10px] font-mono text-emerald-500/80 uppercase tracking-[0.2em] font-bold">Neural Processing...</span>
-  </div>
-);
+const NeuralPulse = ({ type = 'thinking' }: { type?: 'thinking' | 'searching' | 'generating' | 'analyzing' }) => {
+  const getLabel = () => {
+    switch (type) {
+      case 'searching': return 'Searching Neural Web...';
+      case 'generating': return 'Synthesizing Visuals...';
+      case 'analyzing': return 'Analyzing Neural Input...';
+      default: return 'Neural Processing...';
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'searching': return <Zap size={10} className="text-blue-500 animate-pulse" />;
+      case 'generating': return <Sparkles size={10} className="text-purple-500 animate-pulse" />;
+      case 'analyzing': return <Shield size={10} className="text-emerald-500 animate-pulse" />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-full backdrop-blur-md relative overflow-hidden">
+      <div className="flex items-center gap-1.5">
+        {getIcon() || (
+          <motion.div
+            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+          />
+        )}
+      </div>
+      <span className="text-[10px] font-mono text-emerald-500/80 uppercase tracking-[0.2em] font-bold">{getLabel()}</span>
+      
+      {type === 'generating' && (
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-purple-500/10">
+          <motion.div
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-1/3 h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+          />
+        </div>
+      )}
+      {type === 'searching' && (
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500/10">
+          <motion.div
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-1/4 h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CodeBlock = ({ language, value }: { language: string; value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -118,21 +161,49 @@ const CodeBlock = ({ language, value }: { language: string; value: string }) => 
 
 const NeuralWaveform = ({ isActive }: { isActive: boolean }) => {
   return (
-    <div className="flex items-center gap-[2px] h-4">
-      {[...Array(8)].map((_, i) => (
+    <div className="flex items-center gap-[3px] h-6 px-3 bg-emerald-500/5 border border-emerald-500/10 rounded-full backdrop-blur-md">
+      {[...Array(12)].map((_, i) => (
         <motion.div
           key={i}
           animate={isActive ? {
-            height: [4, Math.random() * 12 + 4, 4],
-          } : { height: 4 }}
+            height: [4, Math.random() * 16 + 4, 4],
+            opacity: [0.3, 1, 0.3],
+          } : { height: 4, opacity: 0.2 }}
           transition={{
-            duration: 0.5 + Math.random() * 0.5,
+            duration: 0.4 + Math.random() * 0.4,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="w-[2px] bg-emerald-500 rounded-full"
+          className="w-[2px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
         />
       ))}
+    </div>
+  );
+};
+
+const SystemConsole = ({ logs }: { logs: string[] }) => {
+  return (
+    <div className="hidden xl:flex flex-col gap-2 fixed left-6 top-24 w-64 p-4 bg-black/40 border border-zinc-800/50 rounded-3xl backdrop-blur-xl z-10">
+      <div className="flex items-center gap-2 mb-2">
+        <Terminal size={12} className="text-emerald-500" />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">System Console</span>
+      </div>
+      <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto pr-2">
+        <AnimatePresence mode="popLayout">
+          {logs.map((log, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="text-[9px] font-mono text-zinc-500 leading-relaxed border-l border-zinc-800 pl-2"
+            >
+              <span className="text-emerald-500/50 mr-1">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
+              {log}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
@@ -158,6 +229,7 @@ export default function App() {
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState<'thinking' | 'searching' | 'generating' | 'analyzing'>('thinking');
   const [isRecording, setIsRecording] = useState(false);
   const [useSearch, setUseSearch] = useState(false);
   const [imageMode, setImageMode] = useState(false);
@@ -199,6 +271,11 @@ export default function App() {
     }
     return 'dark';
   });
+  const [consoleLogs, setConsoleLogs] = useState<string[]>(['Neural link established', 'Core systems online', 'Awaiting operational directives...']);
+
+  const addLog = (message: string) => {
+    setConsoleLogs(prev => [message, ...prev].slice(0, 20));
+  };
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -449,6 +526,20 @@ export default function App() {
     }
 
     setIsLoading(true);
+    if (imageMode) {
+      setLoadingType('generating');
+      addLog('Initializing visual synthesis engine...');
+    } else if (useSearch) {
+      setLoadingType('searching');
+      addLog('Establishing wide-area neural search link...');
+    } else if (currentImage) {
+      setLoadingType('analyzing');
+      addLog('Analyzing visual neural patterns...');
+    } else {
+      setLoadingType('thinking');
+      addLog('Processing neural query...');
+    }
+
     const startTime = Date.now();
 
     const botMessageId = (Date.now() + 1).toString();
@@ -482,6 +573,7 @@ export default function App() {
 
       for await (const chunk of stream) {
         if (chunk.text) {
+          if (!fullContent) addLog('Receiving neural stream...');
           fullContent += chunk.text;
         }
         
@@ -489,6 +581,7 @@ export default function App() {
         if (chunk.candidates?.[0]?.content?.parts) {
           for (const part of chunk.candidates[0].content.parts) {
             if (part.inlineData) {
+              if (!imageUrl) addLog('Visual synthesis complete. Rendering image...');
               imageUrl = `data:image/png;base64,${part.inlineData.data}`;
             }
           }
@@ -497,9 +590,13 @@ export default function App() {
         // Handle Search Grounding Metadata
         const chunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
         if (chunks) {
-          groundingUrls = chunks
+          const newUrls = chunks
             .filter((c: any) => c.web?.uri)
             .map((c: any) => c.web.uri);
+          if (newUrls.length > groundingUrls.length) {
+            addLog(`Retrieved ${newUrls.length} neural search results...`);
+          }
+          groundingUrls = newUrls;
         }
 
         setMessages((prev) =>
@@ -524,6 +621,7 @@ export default function App() {
             : msg
         )
       );
+      addLog(`Transmission complete. Latency: ${Date.now() - startTime}ms`);
 
       if (useTTS && fullContent) {
         speak(fullContent);
@@ -831,22 +929,18 @@ export default function App() {
       theme === 'dark' ? "bg-[#050505] text-zinc-100" : "bg-zinc-50 text-zinc-900"
     )}>
       {/* Immersive Background Elements */}
+      <div className="atmosphere" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {showScanlines && (
-          <div className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] mix-blend-overlay"
-               style={{ backgroundImage: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))', backgroundSize: '100% 2px, 3px 100%' }} />
+          <div className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] mix-blend-overlay overflow-hidden">
+            <div className="absolute inset-0 scanline-anim" 
+                 style={{ backgroundImage: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))', backgroundSize: '100% 2px, 3px 100%' }} />
+          </div>
         )}
-        <div className={cn(
-          "absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 transition-colors duration-1000",
-          theme === 'dark' ? "bg-emerald-900/30" : "bg-emerald-200/40"
-        )} />
-        <div className={cn(
-          "absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] rounded-full blur-[100px] opacity-10 transition-colors duration-1000",
-          theme === 'dark' ? "bg-blue-900/20" : "bg-blue-100/30"
-        )} />
       </div>
 
       <SettingsModal />
+      <SystemConsole logs={consoleLogs} />
 
       {/* Header */}
       <header className={cn(
@@ -1063,17 +1157,15 @@ export default function App() {
                       message.role === 'user' ? "flex-row-reverse" : "flex-row"
                     )}>
                       <div className={cn(
-                        "px-5 py-4 rounded-[1.5rem] text-[15px] leading-relaxed flex-1 transition-all duration-500 shadow-sm",
+                        "p-5 rounded-[2rem] shadow-2xl transition-all duration-500 group/content relative overflow-hidden",
                         message.role === 'user' 
-                          ? (theme === 'dark' ? "bg-zinc-800 text-zinc-100 rounded-tr-none" : "bg-zinc-200 text-zinc-900 rounded-tr-none")
-                          : cn(
-                              "border rounded-tl-none",
-                              theme === 'dark' 
-                                ? "bg-zinc-900/40 border-zinc-800/50 text-zinc-200 backdrop-blur-sm" 
-                                : "bg-white border-zinc-200 text-zinc-800",
-                              message.isError && (theme === 'dark' ? "border-red-500/30 text-red-200 bg-red-500/5" : "border-red-200 text-red-600 bg-red-50/50")
-                            )
+                          ? (theme === 'dark' ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-50" : "bg-emerald-500 text-white shadow-emerald-500/20") 
+                          : (theme === 'dark' ? "bg-zinc-900/40 border border-zinc-800/50 backdrop-blur-xl" : "bg-white border border-zinc-200/60 shadow-sm"),
+                        message.isError && "bg-red-500/10 border-red-500/20 text-red-500"
                       )}>
+                        {message.role === 'model' && theme === 'dark' && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                        )}
                         {message.imageUrl && (
                           <div className="mb-4 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
                             <img 
@@ -1250,7 +1342,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-start pl-12 mt-4"
             >
-              <NeuralPulse />
+              <NeuralPulse type={loadingType} />
             </motion.div>
           )}
           <div ref={messagesEndRef} className="h-4" />
@@ -1378,6 +1470,37 @@ export default function App() {
                 className="hidden"
               />
 
+              <div className="absolute left-4 bottom-3 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setUseSearch(!useSearch)}
+                  className={cn(
+                    "p-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 border",
+                    useSearch 
+                      ? "bg-blue-500/10 border-blue-500/30 text-blue-500" 
+                      : "bg-zinc-800/50 border-zinc-700/30 text-zinc-500 hover:text-zinc-300"
+                  )}
+                  title="Toggle Search Grounding"
+                >
+                  <Zap size={16} className={useSearch ? "animate-pulse" : ""} />
+                  <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">Search</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode(!imageMode)}
+                  className={cn(
+                    "p-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 border",
+                    imageMode 
+                      ? "bg-purple-500/10 border-purple-500/30 text-purple-500" 
+                      : "bg-zinc-800/50 border-zinc-700/30 text-zinc-500 hover:text-zinc-300"
+                  )}
+                  title="Toggle Image Generation Mode"
+                >
+                  <ImageIcon size={16} className={imageMode ? "animate-pulse" : ""} />
+                  <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">Vision</span>
+                </button>
+              </div>
+
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -1387,10 +1510,10 @@ export default function App() {
                     handleSubmit();
                   }
                 }}
-                placeholder="Command TROCK..."
+                placeholder={imageMode ? "Describe the visual to generate..." : "Command TROCK..."}
                 rows={1}
                 className={cn(
-                  "w-full border rounded-[2rem] px-8 py-5 pr-20 focus:outline-none focus:ring-2 transition-all text-[15px] resize-none min-h-[64px] max-h-[300px] overflow-y-auto shadow-2xl",
+                  "w-full border rounded-[2.5rem] px-8 py-6 pr-32 pl-32 md:pl-40 focus:outline-none focus:ring-2 transition-all text-[15px] resize-none min-h-[72px] max-h-[300px] overflow-y-auto shadow-2xl",
                   theme === 'dark' 
                     ? "bg-zinc-900/60 border-zinc-800/50 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/50 focus:ring-emerald-500/10" 
                     : "bg-zinc-50 border-zinc-200/60 text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500/50 focus:ring-emerald-500/5"
