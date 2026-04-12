@@ -181,6 +181,60 @@ const NeuralWaveform = ({ isActive }: { isActive: boolean }) => {
   );
 };
 
+const DigitalRain = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const chars = '01ã‚¢ã‚¤ã‚¦ã‚¨ã‚ªã‚«ã‚ã‚¯ã‚±ã‚³ã‚µã‚·ã‚¹ã‚»ã‚½ã‚¿ãƒ ãƒ„ãƒ†ãƒˆãƒŠãƒ‹ãƒŒãƒ ãƒŽãƒ ãƒ’ãƒ•ãƒ˜ãƒ›ãƒžãƒŸãƒ ãƒ¡ãƒ¢ãƒ¤ãƒ¦ãƒ¨ãƒ©ãƒªãƒ«ãƒ¬ãƒãƒ¯ãƒ³';
+    const fontSize = 14;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops: number[] = new Array(columns).fill(1);
+
+    const draw = () => {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#10b981'; // emerald-500
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    };
+
+    const interval = setInterval(draw, 33);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] mix-blend-screen"
+    />
+  );
+};
+
 const SystemConsole = ({ logs }: { logs: string[] }) => {
   return (
     <div className="hidden xl:flex flex-col gap-2 fixed left-6 top-24 w-64 p-4 bg-black/40 border border-zinc-800/50 rounded-3xl backdrop-blur-xl z-10">
@@ -241,6 +295,12 @@ export default function App() {
     return true;
   });
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showDigitalRain, setShowDigitalRain] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('trock-digital-rain') === 'true';
+    }
+    return false;
+  });
   const [systemStats, setSystemStats] = useState({
     latency: 0,
     load: 0,
@@ -853,6 +913,42 @@ export default function App() {
                     )} />
                   </div>
                 </button>
+
+                <button
+                  onClick={() => {
+                    const newValue = !showDigitalRain;
+                    setShowDigitalRain(newValue);
+                    localStorage.setItem('trock-digital-rain', String(newValue));
+                  }}
+                  className={cn(
+                    "w-full p-4 rounded-2xl border transition-all flex items-center justify-between group",
+                    showDigitalRain 
+                      ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-500" 
+                      : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                      showDigitalRain ? "bg-emerald-500 text-black" : "bg-zinc-800 text-zinc-500"
+                    )}>
+                      <Terminal size={20} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest">Digital Rain</span>
+                      <span className="block text-[9px] text-zinc-500 font-mono uppercase">Matrix-style background overlay</span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "w-10 h-5 rounded-full relative transition-colors duration-300",
+                    showDigitalRain ? "bg-emerald-500" : "bg-zinc-700"
+                  )}>
+                    <div className={cn(
+                      "absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300",
+                      showDigitalRain ? "left-6" : "left-1"
+                    )} />
+                  </div>
+                </button>
               </section>
 
               {/* Persona Section */}
@@ -929,6 +1025,7 @@ export default function App() {
       theme === 'dark' ? "bg-[#050505] text-zinc-100" : "bg-zinc-50 text-zinc-900"
     )}>
       {/* Immersive Background Elements */}
+      {showDigitalRain && <DigitalRain />}
       <div className="atmosphere" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {showScanlines && (
